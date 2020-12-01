@@ -1,0 +1,7 @@
+{
+  "name": "Dow Jones CI workflow for Node JS apps",
+  "description": "Dow Jones CI workflow template for Node JS apps.",
+  "iconName": "nodejs-logo",
+  "categories": ["JavaScript"],
+  "filePatterns": ["package.json$", ".*\\.js$", ".*\\.jsx$"]
+}
