@@ -1,0 +1,5 @@
+{
+  "name": "Stale",
+  "description": "Mark and cleanup issues/PRs with no activity.",
+  "iconName": "workflow"
+}
