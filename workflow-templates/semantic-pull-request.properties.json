@@ -1,0 +1,5 @@
+{
+  "name": "Semantic Pull Request",
+  "description": "Ensures that your PR title matches the Conventional Commits spec",
+  "iconName": "pull-request"
+}
