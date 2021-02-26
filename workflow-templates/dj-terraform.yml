@@ -1,0 +1,56 @@
+name: Terraform Deployer
+
+on:
+  push:
+    branches: [$default-branch]
+    paths:
+      - provision/terraform/**
+
+jobs:
+  terraform-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      TF_IN_AUTOMATION: 1
+      TF_INPUT: 0
+      AWS_TF_STATE_BUCKET: '<path to S3 bucket>'
+      AWS_REGION_SHORT: 'vir'
+      DEPLOY_ENVIRONMENT: 'nonprod'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Create AWS profile
+        uses: mrchief/aws-creds-okta@v1.1.3
+        with:
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          okta_username: ${{ secrets.OKTA_USERNAME }}
+          okta_password: ${{ secrets.OKTA_PASSWORD }}
+          okta_app_url: ${{ secrets.OKTA_AWS_APP_URL }}
+          okta_mfa_seed: ${{ secrets.OKTA_2FA_SECRET }}
+
+      - uses: hashicorp/setup-terraform@v1
+
+      - name: Prepare Terraform workspace
+        run: |
+          # create a dir to hold all files to be used for deployment
+          mkdir -p "${GITHUB_WORKSPACE}/target"
+
+          # copy terraform files and env/region specific tfvars to target dir
+          cp -R provision/terraform/*.tf provision/terraform/modules provision/terraform/vars/env.${DEPLOY_ENVIRONMENT}.auto.tfvars provision/terraform/vars/region.${AWS_REGION_SHORT}.auto.tfvars "${GITHUB_WORKSPACE}/target"
+
+      - name: Deploy to the environment
+        working-directory: target
+        run: |
+          # initialize terraform state
+          terraform init -backend-config="bucket=${AWS_TF_STATE_BUCKET}"
+
+          # switch to workspace
+          terraform workspace new "${DEPLOY_ENVIRONMENT}" || terraform workspace select "${DEPLOY_ENVIRONMENT}"
+
+          # generate plan
+          terraform plan -out=tfplan
+
+          # apply changes
+          terraform apply -auto-approve tfplan
