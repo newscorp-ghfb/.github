@@ -1,0 +1,6 @@
+{
+  "name": "Dow Jones Terraform Validator",
+  "description": "Validates terraform files for potential formatting, linting and plan errors",
+  "iconName": "terraform-logo",
+  "categories": ["terraform", "tf", "hcl"]
+}
