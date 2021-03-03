@@ -2,5 +2,5 @@
   "name": "Dow Jones CD workflow for Node JS apps",
   "description": "Continously deploy NPM packages to Github Pacakge Registry",
   "iconName": "nodejs-logo",
-  "categories": ["JavaScript", "Node", "Npm"]
+  "filePatterns": ["package.json$"]
 }
