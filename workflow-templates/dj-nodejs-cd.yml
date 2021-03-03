@@ -1,11 +1,10 @@
-#### README
 # Reference: https://docs.github.com/en/packages/guides/configuring-npm-for-use-with-github-packages#publishing-a-package
 #
 # * All packages are scoped to "@newscorp-ghfb", so make sure the package name in your package.json has the format: @newscorp-ghfb/<name or package>
 # * Consider using Conventional Commits to auto increment the version
 # * You may want to modify the branches to something like "release" if you're publishing "stable", production ready code.
 #   From a continous integration standpoint, you can keep the default branch as the push target but then you may want to tag them as "pre-release".
-####
+
 name: Dow Jones CD workflow for Node JS apps
 
 on:
