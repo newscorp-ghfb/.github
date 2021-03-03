@@ -1,0 +1,6 @@
+{
+  "name": "JAMStack Linter and auto fixer",
+  "description": "Lints and formats JS, HTML, CSS, Markdown, Yaml, Python & Docker files.",
+  "iconName": "linter-logo",
+  "categories": ["JavaScript", "Python", "HTML", "CSS", "Markdown", "YAML", "Dockerfile"]
+}
