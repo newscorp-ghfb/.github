@@ -1,0 +1,20 @@
+name: Woke
+on:
+  push:
+    branches: [$default-branch]
+  pull_request:
+    branches: [$default-branch]
+
+jobs:
+  woke:
+    name: woke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: woke
+        uses: get-woke/woke-action@v0
+        with:
+          fail-on-error: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}

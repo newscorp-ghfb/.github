@@ -1,0 +1,5 @@
+{
+  "name": "Woke",
+  "description": "Checks for offensive language in source code repositories",
+  "iconName": "linter-logo"
+}
