@@ -1,0 +1,7 @@
+{
+  "name": "Storybook Deployer",
+  "description": "Builds and deploys Storybook to Github Pages. Supports multiple Storybooks for Pull Requests.",
+  "iconName": "storybook-logo",
+  "categories": ["JavaScript", "TypeScript"],
+  "filePatterns": ["package.json$", ".storybook"]
+}
