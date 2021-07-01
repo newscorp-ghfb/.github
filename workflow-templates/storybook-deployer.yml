@@ -1,0 +1,116 @@
+# Builds and deploys Storybook to Github Pages. Supports multiple Storybooks for Pull Requests.
+#
+# * When a PR is merged into `main`, this will build the storybook and publish it to `main` folder under gh-pages branch.
+# * When a PR is opened/edited, this will build the storybook and publish it to `pr-<num>` folder under gh-pages branch.
+# * When a PR is closed, this will cleanup the `pr-<num>` folder under gh-pages branch.
+#
+
+name: Storybook Deployer
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+  push:
+    branches: [main]
+env:
+  # GH_PAGES_URL: '🚨🚨 Enable Github Pages for the repo, paste the gh-pages URL generated here (e.g. https://vigilant-tribble-e9630c56.pages.github.io)'
+  GH_PAGES_URL: '[TODO]'
+  GH_PAGES_BRANCH: gh-pages # if you choose a different branch, update this
+
+jobs:
+  deploy_storybook:
+    name: Deploy Storybook
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push'
+      || (github.event_name == 'pull_request' && github.event.action != 'closed')
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          always-auth: true
+          registry-url: https://npm.pkg.github.com
+          scope: '@newscorp-ghfb'
+
+      - # for ultra fast installs
+        name: Restore node_modules Cache
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Dependencies
+        run: npm ci --prefer-offline --no-audit # or yarn install --frozen-lockfile
+
+      - # make sure you include storybook as a dependnecy
+        name: Build storybook
+        run: npx build-storybook --quiet -o build # or yarn build-storybook -o build
+
+      - name: Crunch Numbers
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "TARGET_DIR=main" >>$GITHUB_ENV
+          else
+            echo "TARGET_DIR=pr-${{ github.event.pull_request.number }}" >>$GITHUB_ENV
+          fi
+
+      - name: Deploy Storybook
+        run: |
+          git fetch origin gh-pages
+          git worktree add -B "$GH_PAGES_BRANCH" ghp "origin/$GH_PAGES_BRANCH"
+
+          cd ghp
+          rm -rf "${TARGET_DIR}"
+          mkdir -p "${TARGET_DIR}"
+          cp -a ../build/* "${TARGET_DIR}"
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add --all
+          git diff-index --quiet HEAD || git commit -m "docs: Storybook generated for ${{ github.sha }} 📚"
+          git push origin "$GH_PAGES_BRANCH"
+
+          # we could cleanup the worktree but this container is ephemeral anyway.
+
+      - name: Find Comment
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '#### 🎉🎉 Storybook Preview is ready!! 📚'
+
+      - name: Post Storybook Link
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            #### 🎉🎉 Storybook Preview is ready!! 📚
+            View the storybook at ${{ env.GH_PAGES_URL }}/pr-${{ github.event.pull_request.number }}
+          edit-mode: replace
+
+  cleanup_storybook:
+    name: Cleanup PR Storybook
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.GH_PAGES_BRANCH }}
+
+      - name: Cleanup PR Storybook
+        run: |
+          rm -rf "pr-${{ github.event.pull_request.number }}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add --all
+          git commit -m "chore: Cleaning up pr-${{ github.event.pull_request.number }} folder 🔥"
+          git push
